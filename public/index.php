@@ -15,13 +15,18 @@ $dotenv->required([
 
 use App\Router;
 use App\Middleware\CorsMiddleware;
+use App\Middleware\RateLimitMiddleware;
+use App\Controllers\AuthController;
 
 $router = new Router();
 
 // Global middleware
 $router->addGlobalMiddleware([CorsMiddleware::class, 'handle']);
 
-// Routes will be registered in subsequent commits
+// Auth routes
+$router->post('/api/auth/register', [AuthController::class, 'register'], [
+    [RateLimitMiddleware::class, 'forRegister'],
+]);
 
 // Resolve the current request
 $method = $_SERVER['REQUEST_METHOD'];
