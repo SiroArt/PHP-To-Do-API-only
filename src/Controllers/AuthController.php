@@ -114,4 +114,17 @@ class AuthController
             'expires_in'        => $result['expires_in'],
         ], 'Token refreshed.');
     }
+
+    public static function logout(array $params): void
+    {
+        $userId = $GLOBALS['auth_user_id'];
+        $data = Security::getJsonInput();
+
+        // Optionally revoke a specific token by JTI, otherwise revoke all
+        $jti = $data['token_jti'] ?? null;
+
+        AuthService::logout($userId, $jti);
+
+        Response::success([], 'Logged out successfully.');
+    }
 }

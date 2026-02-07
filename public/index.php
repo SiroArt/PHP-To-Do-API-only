@@ -32,6 +32,9 @@ $router->post('/api/auth/login', [AuthController::class, 'login'], [
     [RateLimitMiddleware::class, 'forLogin'],
 ]);
 $router->post('/api/auth/refresh', [AuthController::class, 'refresh']);
+$router->post('/api/auth/logout', [AuthController::class, 'logout'], [
+    [AuthMiddleware::class, 'handle'],
+]);
 
 // Resolve the current request
 $method = $_SERVER['REQUEST_METHOD'];
