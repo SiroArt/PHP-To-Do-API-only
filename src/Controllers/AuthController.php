@@ -90,4 +90,28 @@ class AuthController
 
         Response::success($response, 'Login successful.');
     }
+
+    public static function refresh(array $params): void
+    {
+        $data = Security::getJsonInput();
+
+        if (!$data || empty($data['remember_me_token'])) {
+            Response::error('remember_me_token is required.', 400);
+            return;
+        }
+
+        $result = AuthService::refresh($data['remember_me_token']);
+
+        if (isset($result['error'])) {
+            Response::error($result['error'], $result['status']);
+            return;
+        }
+
+        Response::success([
+            'access_token'      => $result['access_token'],
+            'remember_me_token' => $result['remember_me_token'],
+            'token_type'        => $result['token_type'],
+            'expires_in'        => $result['expires_in'],
+        ], 'Token refreshed.');
+    }
 }

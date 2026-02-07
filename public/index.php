@@ -16,6 +16,7 @@ $dotenv->required([
 use App\Router;
 use App\Middleware\CorsMiddleware;
 use App\Middleware\RateLimitMiddleware;
+use App\Middleware\AuthMiddleware;
 use App\Controllers\AuthController;
 
 $router = new Router();
@@ -30,6 +31,7 @@ $router->post('/api/auth/register', [AuthController::class, 'register'], [
 $router->post('/api/auth/login', [AuthController::class, 'login'], [
     [RateLimitMiddleware::class, 'forLogin'],
 ]);
+$router->post('/api/auth/refresh', [AuthController::class, 'refresh']);
 
 // Resolve the current request
 $method = $_SERVER['REQUEST_METHOD'];
