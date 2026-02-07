@@ -38,6 +38,12 @@ $router->post('/api/auth/refresh', [AuthController::class, 'refresh']);
 $router->post('/api/auth/logout', [AuthController::class, 'logout'], [
     [AuthMiddleware::class, 'handle'],
 ]);
+$router->post('/api/auth/forgot-password', [AuthController::class, 'forgotPassword'], [
+    [RateLimitMiddleware::class, 'forPasswordReset'],
+]);
+$router->post('/api/auth/reset-password', [AuthController::class, 'resetPassword'], [
+    [RateLimitMiddleware::class, 'forPasswordReset'],
+]);
 
 // User profile routes
 $authMw = [[AuthMiddleware::class, 'handle'], [RateLimitMiddleware::class, 'forApi']];

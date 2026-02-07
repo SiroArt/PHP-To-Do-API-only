@@ -27,6 +27,7 @@ Vanilla PHP with custom router. MVC-like structure:
 - `remember_tokens` — id, user_id (FK), token_jti, token_hash (SHA-256), family_id, expires_at, revoked
 - `todos` — id, user_id (FK), title, description, todo_date, is_completed, reminder_time, reminder_triggered
 - `rate_limits` — id, identifier, endpoint, hits, window_start
+- `password_resets` — id, user_id (FK), token_hash (SHA-256), expires_at, used
 
 ## JWT Strategy
 - **Access Token:** 15 min expiry, HS256, stateless, sent via `Authorization: Bearer` header
@@ -41,7 +42,8 @@ Vanilla PHP with custom router. MVC-like structure:
 - Password complexity: min 8 chars, uppercase, lowercase, number, special char
 - PDO prepared statements everywhere (no string concatenation in SQL)
 - Input validation on all endpoints
-- Rate limiting: login 5/min, register 3/min, API 60/min per user
+- Rate limiting: login 5/min, register 3/min, password reset 3/min, API 60/min per user
+- Password reset: secure random token (SHA-256 hashed in DB), 1-hour expiry, single-use, revokes all sessions
 - Security headers: X-Content-Type-Options, X-Frame-Options, Cache-Control, HSTS
 - CORS with configurable allowed origins
 - Separate JWT secrets for access and remember-me tokens
@@ -53,6 +55,8 @@ Vanilla PHP with custom router. MVC-like structure:
 | POST | /api/auth/login | No | Login, get tokens |
 | POST | /api/auth/refresh | Remember-me | Refresh access token |
 | POST | /api/auth/logout | Yes | Revoke tokens |
+| POST | /api/auth/forgot-password | No | Request password reset token |
+| POST | /api/auth/reset-password | No | Reset password with token |
 | GET | /api/user/profile | Yes | Get profile |
 | PUT | /api/user/profile | Yes | Update profile |
 | PUT | /api/user/password | Yes | Change password |

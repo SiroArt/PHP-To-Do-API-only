@@ -4,7 +4,7 @@ A secure REST API backend for a todo listing application with user management, J
 
 ## Features
 
-- **User Management** — Registration, login, profile updates, password changes
+- **User Management** — Registration, login, profile updates, password changes, password reset
 - **Dual JWT Authentication** — Short-lived access tokens (15 min) + long-lived remember-me tokens (30 days) with automatic rotation
 - **Token Theft Detection** — Remember-me tokens use a family-based rotation strategy; reuse of a revoked token invalidates the entire token family
 - **Todo Management** — Full CRUD with per-date organization and ownership enforcement
@@ -29,11 +29,11 @@ A secure REST API backend for a todo listing application with user management, J
 │   ├── Router.php                # Custom regex-based router
 │   ├── Config/Database.php       # PDO singleton connection
 │   ├── Controllers/              # AuthController, UserController, TodoController, ReminderController
-│   ├── Models/                   # User, Todo, RememberToken (PDO prepared statements)
+│   ├── Models/                   # User, Todo, RememberToken, PasswordReset (PDO prepared statements)
 │   ├── Services/                 # JWTService, AuthService (business logic)
 │   ├── Middleware/               # AuthMiddleware, CorsMiddleware, RateLimitMiddleware
 │   └── Helpers/                  # Response, Validator, Security utilities
-├── migrations/                   # SQL DDL scripts (4 tables)
+├── migrations/                   # SQL DDL scripts (5 tables)
 ├── cron/check_reminders.php      # Cron job to flag triggered reminders
 ├── .env.example                  # Environment variable template
 └── composer.json                 # Dependencies and PSR-4 autoloading
@@ -73,6 +73,7 @@ A secure REST API backend for a todo listing application with user management, J
    mysql -u root -p todo_app < migrations/002_create_remember_tokens_table.sql
    mysql -u root -p todo_app < migrations/003_create_todos_table.sql
    mysql -u root -p todo_app < migrations/004_create_rate_limits_table.sql
+   mysql -u root -p todo_app < migrations/005_create_password_resets_table.sql
    ```
 
 5. **Start the development server**
@@ -95,6 +96,8 @@ A secure REST API backend for a todo listing application with user management, J
 | `POST` | `/api/auth/login` | No | Login and receive tokens |
 | `POST` | `/api/auth/refresh` | Remember-me token | Refresh access token (rotates remember-me token) |
 | `POST` | `/api/auth/logout` | Bearer token | Revoke remember-me token(s) |
+| `POST` | `/api/auth/forgot-password` | No | Request a password reset token |
+| `POST` | `/api/auth/reset-password` | No | Reset password using token |
 
 ### User Profile
 
@@ -146,6 +149,20 @@ curl -X POST http://localhost:8000/api/todos \
   -d '{"title": "Buy groceries", "description": "Milk, eggs, bread", "todo_date": "2025-01-15", "reminder_time": "2025-01-15 09:00:00"}'
 ```
 
+### Forgot password
+```bash
+curl -X POST http://localhost:8000/api/auth/forgot-password \
+  -H "Content-Type: application/json" \
+  -d '{"email": "john@example.com"}'
+```
+
+### Reset password
+```bash
+curl -X POST http://localhost:8000/api/auth/reset-password \
+  -H "Content-Type: application/json" \
+  -d '{"token": "THE_RESET_TOKEN_FROM_ABOVE", "new_password": "NewSecret@456"}'
+```
+
 ### Refresh token
 ```bash
 curl -X POST http://localhost:8000/api/auth/refresh \
@@ -159,14 +176,15 @@ curl -X POST http://localhost:8000/api/auth/refresh \
 - **Account Lockout** — 5 failed login attempts triggers a 15-minute lockout
 - **Password Policy** — Minimum 8 characters, requires uppercase, lowercase, number, and special character
 - **SQL Injection** — All queries use PDO prepared statements
-- **Rate Limiting** — Login: 5/min, Register: 3/min, API: 60/min per user
+- **Password Reset** — Cryptographically secure tokens (SHA-256 hashed in DB), 1-hour expiry, single-use, revokes all sessions on reset
+- **Rate Limiting** — Login: 5/min, Register: 3/min, Password reset: 3/min, API: 60/min per user
 - **Security Headers** — `X-Content-Type-Options`, `X-Frame-Options`, `X-XSS-Protection`, `Cache-Control`, `HSTS`
 - **JWT Secrets** — Separate secrets for access and remember-me tokens
 - **Token Rotation** — Remember-me tokens are rotated on each refresh; reuse of a revoked token invalidates the entire token family
 
 ## Database Schema
 
-Four tables: `users`, `remember_tokens`, `todos`, `rate_limits`. See `migrations/` for full DDL.
+Five tables: `users`, `remember_tokens`, `todos`, `rate_limits`, `password_resets`. See `migrations/` for full DDL.
 
 ## License
 

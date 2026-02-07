@@ -22,6 +22,11 @@ class RateLimitMiddleware
         return self::check(Security::getClientIp(), '/api/auth/register', $limit, 60);
     }
 
+    public static function forPasswordReset(array $params = []): bool
+    {
+        return self::check(Security::getClientIp(), '/api/auth/password-reset', 3, 60);
+    }
+
     public static function forApi(array $params = []): bool
     {
         $limit = (int) ($_ENV['RATE_LIMIT_API'] ?? 60);

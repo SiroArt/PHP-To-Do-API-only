@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Models\User;
 use App\Models\RememberToken;
+use App\Models\PasswordReset;
 use App\Helpers\Security;
 
 class AuthService
@@ -160,5 +161,60 @@ class AuthService
         } else {
             RememberToken::revokeAllForUser($userId);
         }
+    }
+
+    public static function forgotPassword(string $email): array
+    {
+        $user = User::findByEmail($email);
+
+        // Always return success to prevent email enumeration
+        if (!$user) {
+            return ['status' => 200];
+        }
+
+        // Generate a cryptographically secure random token
+        $rawToken = bin2hex(random_bytes(32));
+        $tokenHash = Security::hashToken($rawToken);
+
+        $expiry = (int) ($_ENV['PASSWORD_RESET_EXPIRY'] ?? 3600);
+        $expiresAt = date('Y-m-d H:i:s', time() + $expiry);
+
+        PasswordReset::create((int) $user['id'], $tokenHash, $expiresAt);
+
+        return [
+            'reset_token' => $rawToken,
+            'expires_in'  => $expiry,
+            'status'      => 200,
+        ];
+    }
+
+    public static function resetPassword(string $rawToken, string $newPassword): array
+    {
+        $tokenHash = Security::hashToken($rawToken);
+        $record = PasswordReset::findValidByHash($tokenHash);
+
+        if (!$record) {
+            return ['error' => 'Invalid or expired reset token.', 'status' => 400];
+        }
+
+        $user = User::findById((int) $record['user_id']);
+        if (!$user) {
+            return ['error' => 'User not found.', 'status' => 404];
+        }
+
+        // Update password with Argon2id
+        $hash = password_hash($newPassword, PASSWORD_ARGON2ID);
+        User::updatePassword((int) $user['id'], $hash);
+
+        // Mark token as used
+        PasswordReset::markAsUsed((int) $record['id']);
+
+        // Revoke all remember-me tokens — force re-login everywhere
+        RememberToken::revokeAllForUser((int) $user['id']);
+
+        // Reset any account lockout
+        User::resetFailedAttempts((int) $user['id']);
+
+        return ['status' => 200];
     }
 }

@@ -127,4 +127,69 @@ class AuthController
 
         Response::success([], 'Logged out successfully.');
     }
+
+    public static function forgotPassword(array $params): void
+    {
+        $data = Security::getJsonInput();
+
+        if (!$data) {
+            Response::error('Invalid JSON input.', 400);
+            return;
+        }
+
+        $validator = new Validator();
+        $isValid = $validator->validate($data, [
+            'email' => ['required', 'email'],
+        ]);
+
+        if (!$isValid) {
+            Response::validationError($validator->getErrors());
+            return;
+        }
+
+        $email = strtolower(trim($data['email']));
+        $result = AuthService::forgotPassword($email);
+
+        // Build response — always show success to prevent email enumeration
+        $response = ['message' => 'If that email exists, a reset token has been generated.'];
+
+        // Include the token in response (API-only; in production this would be emailed)
+        if (isset($result['reset_token'])) {
+            $response['reset_token'] = $result['reset_token'];
+            $response['expires_in'] = $result['expires_in'];
+            $response['note'] = 'In production, this token would be sent via email, not in the API response.';
+        }
+
+        Response::success($response);
+    }
+
+    public static function resetPassword(array $params): void
+    {
+        $data = Security::getJsonInput();
+
+        if (!$data) {
+            Response::error('Invalid JSON input.', 400);
+            return;
+        }
+
+        $validator = new Validator();
+        $isValid = $validator->validate($data, [
+            'token'        => ['required', 'string'],
+            'new_password' => ['required', 'password'],
+        ]);
+
+        if (!$isValid) {
+            Response::validationError($validator->getErrors());
+            return;
+        }
+
+        $result = AuthService::resetPassword($data['token'], $data['new_password']);
+
+        if (isset($result['error'])) {
+            Response::error($result['error'], $result['status']);
+            return;
+        }
+
+        Response::success([], 'Password has been reset successfully. Please login with your new password.');
+    }
 }
