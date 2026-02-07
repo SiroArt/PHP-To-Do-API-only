@@ -20,6 +20,7 @@ use App\Middleware\AuthMiddleware;
 use App\Controllers\AuthController;
 use App\Controllers\UserController;
 use App\Controllers\TodoController;
+use App\Controllers\ReminderController;
 
 $router = new Router();
 
@@ -44,13 +45,15 @@ $router->get('/api/user/profile', [UserController::class, 'getProfile'], $authMw
 $router->put('/api/user/profile', [UserController::class, 'updateProfile'], $authMw);
 $router->put('/api/user/password', [UserController::class, 'changePassword'], $authMw);
 
-// Todo routes
+// Todo routes (static paths before parameterized to avoid {id} matching "reminders")
 $router->get('/api/todos', [TodoController::class, 'index'], $authMw);
 $router->post('/api/todos', [TodoController::class, 'store'], $authMw);
+$router->get('/api/todos/reminders/triggered', [ReminderController::class, 'triggered'], $authMw);
 $router->get('/api/todos/{id}', [TodoController::class, 'show'], $authMw);
 $router->put('/api/todos/{id}', [TodoController::class, 'update'], $authMw);
 $router->delete('/api/todos/{id}', [TodoController::class, 'destroy'], $authMw);
 $router->patch('/api/todos/{id}/complete', [TodoController::class, 'toggleComplete'], $authMw);
+$router->patch('/api/todos/{id}/reminder-ack', [ReminderController::class, 'acknowledge'], $authMw);
 
 // Resolve the current request
 $method = $_SERVER['REQUEST_METHOD'];
