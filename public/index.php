@@ -19,6 +19,7 @@ use App\Middleware\RateLimitMiddleware;
 use App\Middleware\AuthMiddleware;
 use App\Controllers\AuthController;
 use App\Controllers\UserController;
+use App\Controllers\TodoController;
 
 $router = new Router();
 
@@ -42,6 +43,14 @@ $authMw = [[AuthMiddleware::class, 'handle'], [RateLimitMiddleware::class, 'forA
 $router->get('/api/user/profile', [UserController::class, 'getProfile'], $authMw);
 $router->put('/api/user/profile', [UserController::class, 'updateProfile'], $authMw);
 $router->put('/api/user/password', [UserController::class, 'changePassword'], $authMw);
+
+// Todo routes
+$router->get('/api/todos', [TodoController::class, 'index'], $authMw);
+$router->post('/api/todos', [TodoController::class, 'store'], $authMw);
+$router->get('/api/todos/{id}', [TodoController::class, 'show'], $authMw);
+$router->put('/api/todos/{id}', [TodoController::class, 'update'], $authMw);
+$router->delete('/api/todos/{id}', [TodoController::class, 'destroy'], $authMw);
+$router->patch('/api/todos/{id}/complete', [TodoController::class, 'toggleComplete'], $authMw);
 
 // Resolve the current request
 $method = $_SERVER['REQUEST_METHOD'];
