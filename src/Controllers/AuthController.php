@@ -45,4 +45,49 @@ class AuthController
 
         Response::created(['user' => $result['user']]);
     }
+
+    public static function login(array $params): void
+    {
+        $data = Security::getJsonInput();
+
+        if (!$data) {
+            Response::error('Invalid JSON input.', 400);
+            return;
+        }
+
+        $validator = new Validator();
+        $isValid = $validator->validate($data, [
+            'email'    => ['required', 'email'],
+            'password' => ['required', 'string'],
+        ]);
+
+        if (!$isValid) {
+            Response::validationError($validator->getErrors());
+            return;
+        }
+
+        $email = strtolower(trim($data['email']));
+        $password = $data['password'];
+        $rememberMe = !empty($data['remember_me']);
+
+        $result = AuthService::login($email, $password, $rememberMe);
+
+        if (isset($result['error'])) {
+            Response::error($result['error'], $result['status']);
+            return;
+        }
+
+        $response = [
+            'access_token' => $result['access_token'],
+            'token_type'   => $result['token_type'],
+            'expires_in'   => $result['expires_in'],
+            'user'         => $result['user'],
+        ];
+
+        if (isset($result['remember_me_token'])) {
+            $response['remember_me_token'] = $result['remember_me_token'];
+        }
+
+        Response::success($response, 'Login successful.');
+    }
 }

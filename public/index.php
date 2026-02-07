@@ -27,6 +27,9 @@ $router->addGlobalMiddleware([CorsMiddleware::class, 'handle']);
 $router->post('/api/auth/register', [AuthController::class, 'register'], [
     [RateLimitMiddleware::class, 'forRegister'],
 ]);
+$router->post('/api/auth/login', [AuthController::class, 'login'], [
+    [RateLimitMiddleware::class, 'forLogin'],
+]);
 
 // Resolve the current request
 $method = $_SERVER['REQUEST_METHOD'];
