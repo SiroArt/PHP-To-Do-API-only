@@ -13,4 +13,13 @@ $dotenv->required([
     'JWT_REMEMBER_SECRET', 'JWT_REMEMBER_EXPIRY',
 ])->notEmpty();
 
-// TODO: Router and middleware setup will be added in subsequent commits
+use App\Router;
+
+$router = new Router();
+
+// Routes will be registered in subsequent commits
+
+// Resolve the current request
+$method = $_SERVER['REQUEST_METHOD'];
+$uri = $_SERVER['REQUEST_URI'];
+$router->resolve($method, $uri);
