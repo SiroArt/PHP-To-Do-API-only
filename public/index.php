@@ -18,6 +18,7 @@ use App\Middleware\CorsMiddleware;
 use App\Middleware\RateLimitMiddleware;
 use App\Middleware\AuthMiddleware;
 use App\Controllers\AuthController;
+use App\Controllers\UserController;
 
 $router = new Router();
 
@@ -35,6 +36,12 @@ $router->post('/api/auth/refresh', [AuthController::class, 'refresh']);
 $router->post('/api/auth/logout', [AuthController::class, 'logout'], [
     [AuthMiddleware::class, 'handle'],
 ]);
+
+// User profile routes
+$authMw = [[AuthMiddleware::class, 'handle'], [RateLimitMiddleware::class, 'forApi']];
+$router->get('/api/user/profile', [UserController::class, 'getProfile'], $authMw);
+$router->put('/api/user/profile', [UserController::class, 'updateProfile'], $authMw);
+$router->put('/api/user/password', [UserController::class, 'changePassword'], $authMw);
 
 // Resolve the current request
 $method = $_SERVER['REQUEST_METHOD'];
