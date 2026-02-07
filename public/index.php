@@ -14,8 +14,12 @@ $dotenv->required([
 ])->notEmpty();
 
 use App\Router;
+use App\Middleware\CorsMiddleware;
 
 $router = new Router();
+
+// Global middleware
+$router->addGlobalMiddleware([CorsMiddleware::class, 'handle']);
 
 // Routes will be registered in subsequent commits
 
